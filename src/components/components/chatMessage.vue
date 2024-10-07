@@ -30,7 +30,11 @@ export default defineComponent({
   watch: {
     data(newValue) {
       this.addArr('1', this.sendMessage);
-      this.replayFnc() // 当监听到有消息传入的时候调用回复方法产生回复
+      this.replayFnc(); // 当监听到有消息传入的时候调用回复方法产生回复
+    },
+    recordStatus(newValue) {
+      console.log(newValue);
+      this.handleRecord(this.recordStatus);
     }
   },
   // props:['sendMessage']
@@ -40,8 +44,13 @@ export default defineComponent({
       default: "",
     },
     data: 0,
+    recordStatus: false,
   },
   setup(props) {
+    let audioChunks = []
+
+    let mediaRecorder = null
+
     let chatArr = reactive([
       {
         status: '0', // 0-回复，1-问题
@@ -75,7 +84,7 @@ export default defineComponent({
       let data = reply[reply.length - 1]
       data = data[data.length - 1]
       // 将换行符替换为<br>
-      return data.replace(/\n/g, '<br/>')
+      return data.replace(/\n/g, '<br>')
     }
 
     /** 封装fetch方法 */
@@ -102,8 +111,9 @@ export default defineComponent({
 
     /** 添加进对话数组 */
     function addArr(status, content, plot) {
+      let index = chatArr.length
+
       if(plot){        
-        let index = chatArr.length
         const config = JSON.parse(plot)
         let reply_id = 'reply' + index
         const plotDiv = document.createElement('div');
@@ -121,6 +131,83 @@ export default defineComponent({
       }
       chatArr.push(obj)
       return
+    }
+
+
+
+    /** 录音 */
+    async function handleRecord(recordStatus) {
+        if (!recordStatus) {
+          const audioBlob = await stopRecording(mediaRecorder);
+          sendAudioToServer(audioBlob, '/api/process_audio');
+          return;
+        } else {
+          const stream = await getMicrophoneAccess();
+          mediaRecorder = startRecording(stream);
+        }
+    }
+    /** 获取麦克风权限 */
+    async function getMicrophoneAccess(){
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            return stream;
+        } catch (error) {
+            console.error('Error accessing microphone:', error);
+            throw error;
+        }
+    }
+
+    /** 开始录音 */
+    function startRecording(stream) {
+        const mediaRecorder = new MediaRecorder(stream);
+
+        mediaRecorder.start();
+
+        // 可选：收集录音数据
+        const audioChunks = [];
+        mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+        };
+        return mediaRecorder;
+    }
+    /** 停止录音 */
+    function stopRecording(mediaRecorder){
+        mediaRecorder.stop();
+        return new Promise((resolve) => {
+            mediaRecorder.onstop = (event) => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                resolve(audioBlob);
+            };
+        });
+
+    }
+    /** 发送音频到服务器 */
+    async function sendAudioToServer(audioBlob, url) {
+        const formData = new FormData();
+        formData.append('file', audioBlob);
+        addArr('0','loading')
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                chatArr.pop()
+                addArr('0','网络错误，请稍后再试')
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            console.log('Audio file successfully uploaded.');
+            let reply = await response.json()
+            chatArr.pop()
+            addArr('0',formatReply(reply.history),reply.plot)
+            // store.commit('updateLoading', !store.state.isLoading)
+        } catch (error) {
+            console.error('Error sending audio to server:', error);
+            chatArr.pop()
+            addArr('0','网络错误，请稍后再试')
+        }
     }
 
     /** 清屏 */
@@ -142,9 +229,14 @@ export default defineComponent({
     return {
       clearScreen,
       replayFnc,
-      chatArr,
       addArr,
+      chatArr,
       openFullScreen2,
+      handleRecord,
+      sendAudioToServer,
+      stopRecording,
+      startRecording,
+      getMicrophoneAccess
     }
   }
 });
