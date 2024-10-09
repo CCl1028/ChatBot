@@ -99,10 +99,8 @@ function keyDown(e: any) {
     /* box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.1); */
     border: 2px solid #000;
     font-size: 1.3rem;
-    margin-left: 1rem;
+    /* margin-left: 1rem; */
     /* 输入文本左侧的margin */
-    
-
 }
 
 .sendButtonStyle_false {

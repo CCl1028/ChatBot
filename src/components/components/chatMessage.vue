@@ -84,7 +84,7 @@ export default defineComponent({
       let data = reply[reply.length - 1]
       data = data[data.length - 1]
       // 将换行符替换为<br>
-      return data.replace(/\n/g, '<br>')
+      return data.replace(/\\n/g, '<br>')
     }
 
     /** 封装fetch方法 */
