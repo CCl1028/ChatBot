@@ -10,7 +10,7 @@
         <div style="display:flex">
           <div class="avatar"><img width="50" src="@/assets/images/avatar.jpeg" alt=""></div>
           <div class="left"></div>
-          <div v-if="item.content!=='loading'" class="content">{{ item.content }}</div>
+          <pre v-if="item.content!=='loading'" class="content">{{ item.content }}</pre>
           <div v-else class="loading"></div>
         </div>
       </div>
@@ -341,4 +341,8 @@ export default defineComponent({
   }
 }
 
+pre {
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
 </style>
