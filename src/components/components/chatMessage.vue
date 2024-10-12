@@ -48,7 +48,6 @@ export default defineComponent({
   },
   setup(props) {
     let audioChunks = []
-
     let mediaRecorder = null
 
     let chatArr = reactive([
@@ -138,7 +137,12 @@ export default defineComponent({
     /** 录音 */
     async function handleRecord(recordStatus) {
         if (!recordStatus) {
+          console.log('before stop', mediaRecorder);
           const audioBlob = await stopRecording(mediaRecorder);
+
+          // 查看录音内容
+          console.log('blob', audioBlob);
+          mediaRecorder = null;
           sendAudioToServer(audioBlob, '/api/process_audio');
           return;
         } else {
@@ -164,7 +168,7 @@ export default defineComponent({
         mediaRecorder.start();
 
         // 可选：收集录音数据
-        const audioChunks = [];
+        // const audioChunks = [];
         mediaRecorder.ondataavailable = (event) => {
             audioChunks.push(event.data);
         };
@@ -173,11 +177,13 @@ export default defineComponent({
     /** 停止录音 */
     function stopRecording(mediaRecorder){
         mediaRecorder.stop();
+        console.log('stop', mediaRecorder)
         return new Promise((resolve) => {
             mediaRecorder.onstop = (event) => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                 resolve(audioBlob);
             };
+            audioChunks = [];
         });
 
     }
@@ -185,7 +191,7 @@ export default defineComponent({
     async function sendAudioToServer(audioBlob, url) {
         const formData = new FormData();
         formData.append('file', audioBlob);
-        addArr('0','loading')
+        addArr('0','loading');
         try {
             const response = await fetch(url, {
                 method: 'POST',
