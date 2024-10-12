@@ -190,7 +190,11 @@ export default defineComponent({
     /** 发送音频到服务器 */
     async function sendAudioToServer(audioBlob, url) {
         const formData = new FormData();
-        formData.append('file', audioBlob);
+        // 播放音频
+        // const audioUrl = URL.createObjectURL(audioBlob);
+        // const audio = new Audio(audioUrl);
+        // audio.play();
+        formData.append('file', audioBlob, 'audio.wav');
         addArr('0','loading');
         try {
             const response = await fetch(url, {

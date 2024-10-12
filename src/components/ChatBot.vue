@@ -5,11 +5,14 @@
                 <chatMessage :sendMessage="sendMessage" :data='data' :recordStatus="isRecording"/>
             </div>
             <div style="display:flex; justify-content:center;">
-                <div class="input">
+                <div v-if="!isRecording" class="input">
                     <div class="audio" @click="changeRecord"><img width="50" src="@/assets/images/audio-icon.png" alt=""></div>
                     <input class="inputStyle" v-model="message" placeholder=" 请输入..." @keyup.enter="send" />
-                    <!-- <el-input class="inputStyle" v-model="message" placeholder="Please input your problem" clearable /> -->
                     <button :class="'sendButtonStyle_' + store.state.isLoading" @click="send">发送</button>
+                </div>
+                <div v-else class="input">
+                    <div class="audio_recording" @click="changeRecord"><img width="50" src="@/assets/images/record-icon.png" alt=""></div>
+                    <div class="cont_recording">录音中，请讲话...</div>
                 </div>
             </div>
         </div>
@@ -129,5 +132,28 @@ function keyDown(e: any) {
     border-radius: 50%;
     margin-left: 0.5rem;
     margin-right: 0.5rem;
+}
+.audio_recording {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    animation: blink 1.5s infinite ease-in-out;
+}
+.cont_recording {
+    font-size: 1.3rem;
+    color: #000;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+}
+
+@keyframes blink {
+    0%, 100% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
 }
 </style>
